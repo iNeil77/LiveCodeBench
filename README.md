@@ -25,6 +25,16 @@ need conda or a preexisting Python** — `uv` provisions everything itself, and 
 GPU stack (PyTorch / vLLM) is installed from CUDA-enabled PyPI wheels, so **no
 system CUDA toolkit is required either** (only an NVIDIA driver for GPU runs).
 
+The locked closure pins **vLLM 0.23 / PyTorch 2.11**, which pulls the
+**FlashInfer** attention backend (`flashinfer-python` + `flashinfer-cubin`) in as
+transitive dependencies — so vLLM will auto-select FlashInfer at runtime with no
+extra setup. We intentionally do **not** add `flash-attn` (FlashAttention) to the
+closure: it ships only as an sdist that compiles against your exact PyTorch/CUDA
+at install time, which would break the "clone and `uv sync`" flow. vLLM already
+bundles a FlashAttention backend; if you specifically want the standalone
+`flash-attn` package, install it out-of-band into the venv to match your
+PyTorch/CUDA build (e.g. `uv pip install flash-attn --no-build-isolation`).
+
 First install `uv` ([several ways](https://github.com/astral-sh/uv?tab=readme-ov-file#installation)); the standalone installer needs nothing preinstalled:
 
 ```bash

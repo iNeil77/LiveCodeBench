@@ -13,8 +13,11 @@ dependencies = [
     "mistralai==0.4.2",
     "openai>=1.59.6",
     "pebble>=5.1.0",
-    "torch>=2.3.0",
-    "vllm>=0.5.0.post1",
+    "torch>=2.11.0",
+    # vllm>=0.20 pulls flashinfer-python + flashinfer-cubin as hard deps, so the
+    # FlashInfer attention backend lands in the locked closure automatically
+    # (same mechanism as the BFCL repo). It also hard-pins torch==2.11.x.
+    "vllm>=0.20.1",
     "together>=0.21.0",
 ]
 
