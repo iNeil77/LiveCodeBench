@@ -70,6 +70,10 @@ def get_parser():
 
 
 def compute_scores(args):
+    # Capture the human-readable filter strings before they are parsed to
+    # datetime objects below (used only for the table title).
+    start_str, end_str = args.start_date, args.end_date
+
     with open(args.eval_all_file, "r") as f:
         results = json.load(f)
 
@@ -91,64 +95,42 @@ def compute_scores(args):
     if args.platform is not None:
         results = [result for result in results if result["platform"] == args.platform]
 
-    print(len(results))
+    from lcb_runner.evaluation.pretty import render_grid
+
     totals = [len(x["graded_list"]) for x in results]
     corrects = [sum(x["graded_list"]) for x in results]
 
-    easy_totals = [len(x["graded_list"]) for x in results if x["difficulty"] == "easy"]
-    med_totals = [len(x["graded_list"]) for x in results if x["difficulty"] == "medium"]
-    hard_totals = [len(x["graded_list"]) for x in results if x["difficulty"] == "hard"]
-    easy_corrects = [sum(x["graded_list"]) for x in results if x["difficulty"] == "easy"]
-    med_corrects = [sum(x["graded_list"]) for x in results if x["difficulty"] == "medium"]
-    hard_corrects = [sum(x["graded_list"]) for x in results if x["difficulty"] == "hard"]
-    for k in [1, 5, 10, 25, 50, 100, 150, 200]:
-        print(
-            f"Pass@{k} = ",
-            estimate_pass_at_k(totals, corrects, k).mean(),
-            # np.array(
-            #     [estimate_pass_at_k(t, c, k) for t, c in zip(totals, corrects)]
-            # ).mean(),
-        )
-        print(
-            f"Easy Pass@{k} = ",
-            estimate_pass_at_k(easy_totals, easy_corrects, k).mean(),
-        )
-        print(
-            f"Medium Pass@{k} = ",
-            estimate_pass_at_k(med_totals, med_corrects, k).mean(),
-        )
-        print(
-            f"Hard Pass@{k} = ",
-            estimate_pass_at_k(hard_totals, hard_corrects, k).mean(),
-        )
+    splits = {
+        "Overall": results,
+        "Easy": [x for x in results if x["difficulty"] == "easy"],
+        "Medium": [x for x in results if x["difficulty"] == "medium"],
+        "Hard": [x for x in results if x["difficulty"] == "hard"],
+    }
+    # Only show k that is meaningful: at most the smallest sample count present
+    # (pass@k for k > n is not well-defined).
+    max_k = min(totals) if totals else 1
+    k_values = [k for k in [1, 5, 10, 25, 50, 100, 150, 200] if k <= max_k]
+    if 1 not in k_values:
+        k_values = [1] + k_values
 
+    headers = ["Split", "N"] + [f"pass@{k}" for k in k_values]
+    rows = []
+    for name, subset in splits.items():
+        if not subset:
+            continue
+        t = [len(x["graded_list"]) for x in subset]
+        c = [sum(x["graded_list"]) for x in subset]
+        cells = [name, str(len(subset))]
+        for k in k_values:
+            cells.append(f"{estimate_pass_at_k(t, c, k).mean() * 100:6.2f}%")
+        rows.append(cells)
 
-    pass_1_list = [result["pass@1"] for result in results]
-    print(f"Pass@1: {sum(pass_1_list) / len(pass_1_list)}")
-
-    easy_pass_1_list = [
-        result["pass@1"]
-        for result in results
-        if "difficulty" in result and result["difficulty"] == "easy"
-    ]
-    if len(easy_pass_1_list) > 0:
-        print(f"Easy Pass@1: {sum(easy_pass_1_list) / len(easy_pass_1_list)}")
-
-    medium_pass_1_list = [
-        result["pass@1"]
-        for result in results
-        if "difficulty" in result and result["difficulty"] == "medium"
-    ]
-    if len(medium_pass_1_list) > 0:
-        print(f"Medium Pass@1: {sum(medium_pass_1_list) / len(medium_pass_1_list)}")
-
-    hard_pass_1_list = [
-        result["pass@1"]
-        for result in results
-        if "difficulty" in result and result["difficulty"] == "hard"
-    ]
-    if len(hard_pass_1_list) > 0:
-        print(f"Hard Pass@1: {sum(hard_pass_1_list) / len(hard_pass_1_list)}")
+    title = f"{len(results)} problems"
+    if start_str or end_str:
+        title += f"  ({start_str or '...'} -> {end_str or '...'})"
+    if args.platform:
+        title += f"  [{args.platform}]"
+    print(render_grid(headers, rows, title=title))
 
 
 if __name__ == "__main__":

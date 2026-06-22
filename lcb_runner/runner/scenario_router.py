@@ -212,6 +212,12 @@ def get_metrics(
     else:
         raise ValueError(f"Scenario {scenario} not implemented")
 
-    print(metrics[0]["pass@1"])
+    from lcb_runner.evaluation.pretty import print_metrics_table
+
+    model_repr = getattr(getattr(args, "model", None), "model_repr", None) or getattr(
+        args, "model", ""
+    )
+    title = f"{model_repr} | {scenario.value}".strip(" |")
+    print_metrics_table(metrics[0], title=title, num_problems=len(benchmark))
 
     return metrics
