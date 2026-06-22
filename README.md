@@ -109,6 +109,43 @@ Every run goes through a single entrypoint, `lcb_runner.runner.main`, which perf
 
 `<model_repr>` is the short display name from [`lcb_runner/lm_styles.py`](./lcb_runner/lm_styles.py) (e.g. `Qwen2.5-7B-Instruct-1M`), not the full repo id. The same naming scheme is reused across all scenarios.
 
+### Running with `uv run`
+
+If you installed via [`uv sync`](#installation), prefix every command with `uv run` so it executes inside the project `.venv` (no activation needed). Stage 2 (Generate) and stage 3 (Evaluate) can be run together or separately — they share the same `output/<model_repr>/` files, so a separate evaluate pass just re-reads the generations the generate pass wrote. Always run from the repository root.
+
+**1. Generate only** — produce completions, no grading (GPU-bound). Omit `--evaluate`:
+
+```bash
+uv run python -m lcb_runner.runner.main \
+    --model Qwen/Qwen2.5-7B-Instruct-1M \
+    --scenario codegeneration \
+    --max_model_len 32768
+```
+
+**2. Evaluate only** — grade generations from a previous "generate only" run (CPU-only, no GPU/model load). Add `--evaluate` **and** `--continue_existing_with_eval` so it reuses the saved completions instead of regenerating:
+
+```bash
+uv run python -m lcb_runner.runner.main \
+    --model Qwen/Qwen2.5-7B-Instruct-1M \
+    --scenario codegeneration \
+    --evaluate --continue_existing_with_eval \
+    --num_process_evaluate 16 --timeout 6
+```
+
+(Equivalently, grade with the standalone evaluator: `uv run python -m lcb_runner.runner.custom_evaluator --custom_output_file output/Qwen2.5-7B-Instruct-1M/codegeneration_10_0.2.json --scenario codegeneration` — see [Custom Evaluation](#custom-evaluation).)
+
+**3. Generate and evaluate in one step** — the usual single command; just add `--evaluate`:
+
+```bash
+uv run python -m lcb_runner.runner.main \
+    --model Qwen/Qwen2.5-7B-Instruct-1M \
+    --scenario codegeneration \
+    --max_model_len 32768 \
+    --evaluate
+```
+
+> Splitting into modes 1 + 2 is recommended when running many GPUs in parallel: do all the GPU-bound generation first, then run a single high-`--num_process_evaluate` grading pass, to avoid CPU oversubscription causing spurious test timeouts. The rest of this README omits the `uv run` prefix for brevity — add it (or activate the venv) on every command.
+
 ### Code Generation (local inference with vLLM)
 
 For local open-weight models we use [`vllm`](https://github.com/vllm-project/vllm) for generation. Provide the `model_name` exactly as registered in [`lcb_runner/lm_styles.py`](./lcb_runner/lm_styles.py) (which is usually the Hugging Face repo id). The minimal command to generate **and** evaluate is:
