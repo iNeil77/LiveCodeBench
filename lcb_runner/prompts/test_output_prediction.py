@@ -4,6 +4,7 @@ from anthropic import HUMAN_PROMPT, AI_PROMPT
 
 from lcb_runner.lm_styles import LMStyle
 from lcb_runner.benchmarks import TestOutputPredictionProblem
+from lcb_runner.prompts.utils import apply_hf_chat_template
 
 
 class PromptConstants:
@@ -157,7 +158,9 @@ def get_qwen_question_template_answer(question: TestOutputPredictionProblem, tes
     return prompt
 
 def format_prompt_test_output(
-    question: TestOutputPredictionProblem, LanguageModelStyle: LMStyle
+    question: TestOutputPredictionProblem,
+    LanguageModelStyle: LMStyle,
+    tokenizer_name: str | None = None,
 ) -> str:
     testcase_input = question.test[0].input
     if LanguageModelStyle == LMStyle.OpenAIChat:
@@ -176,6 +179,23 @@ def format_prompt_test_output(
             },
         ]
         return chat_messages
+    if LanguageModelStyle == LMStyle.GenericInstruct:
+        assert (
+            tokenizer_name is not None
+        ), "GenericInstruct requires a tokenizer_name (the model repo id or local path)"
+        chat_messages = [
+            {
+                "role": "system",
+                "content": PromptConstants.SYSTEM_MESSAGE_CHAT_GENERIC,
+            },
+            {
+                "role": "user",
+                "content": get_generic_question_template_test_completion(
+                    question, testcase_input
+                ),
+            },
+        ]
+        return apply_hf_chat_template(tokenizer_name, chat_messages)
     if LanguageModelStyle == LMStyle.LLaMa3:
         chat_messages = [
             {

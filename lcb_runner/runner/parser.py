@@ -106,6 +106,20 @@ def get_args():
         help="Enable prefix caching for vllm",
     )
     parser.add_argument(
+        "--max_model_len",
+        type=int,
+        default=None,
+        help="Max model (context) length for vllm. Set this for long-context "
+        "models (e.g. the 1M/512k context models) to avoid allocating a huge "
+        "KV cache and running out of memory.",
+    )
+    parser.add_argument(
+        "--gpu_memory_utilization",
+        type=float,
+        default=0.9,
+        help="Fraction of GPU memory vllm is allowed to use",
+    )
+    parser.add_argument(
         "--custom_output_file",
         type=str,
         default=None,

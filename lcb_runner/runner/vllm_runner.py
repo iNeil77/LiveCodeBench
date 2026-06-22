@@ -14,7 +14,7 @@ class VLLMRunner(BaseRunner):
         model_tokenizer_path = (
             model.model_name if args.local_model_path is None else args.local_model_path
         )
-        self.llm = LLM(
+        llm_kwargs = dict(
             model=model_tokenizer_path,
             tokenizer=model_tokenizer_path,
             tensor_parallel_size=args.tensor_parallel_size,
@@ -23,7 +23,14 @@ class VLLMRunner(BaseRunner):
             disable_custom_all_reduce=True,
             enable_prefix_caching=args.enable_prefix_caching,
             trust_remote_code=args.trust_remote_code,
+            gpu_memory_utilization=getattr(args, "gpu_memory_utilization", 0.9),
         )
+        # Only pass max_model_len when explicitly set so vllm keeps using the
+        # model's own default otherwise. Required for the long-context (1M/512k)
+        # models to avoid allocating an enormous KV cache.
+        if getattr(args, "max_model_len", None) is not None:
+            llm_kwargs["max_model_len"] = args.max_model_len
+        self.llm = LLM(**llm_kwargs)
         self.sampling_params = SamplingParams(
             n=self.args.n,
             max_tokens=self.args.max_tokens,

@@ -32,6 +32,10 @@ class LMStyle(Enum):
     LLaMa3 = "LLaMa3"
     DeepSeekR1 = "DeepSeekR1"
 
+    # Generic instruction-tuned local model: renders prompts using the
+    # model's own HF chat template (see lcb_runner/prompts/utils.py).
+    GenericInstruct = "GenericInstruct"
+
     TogetherAI = "TogetherAI"
 
 
@@ -194,7 +198,7 @@ LanguageModelList: list[LanguageModel] = [
     LanguageModel(
         "01-ai/Yi-Coder-9B-Chat",
         "Yi-Coder-9B-Chat",
-        LMStyle.DeepSeekAPI,
+        LMStyle.GenericInstruct,
         datetime(2023, 8, 1),
         link="https://huggingface.co/01-ai/Yi-Coder-9B-Chat",
     ),
@@ -860,6 +864,167 @@ LanguageModelList: list[LanguageModel] = [
         LMStyle.DeepSeekR1,
         datetime(2024, 4, 1),
         "https://huggingface.co/agentica-org/DeepCoder-14B-Preview",
+    ),
+    ## Local long-context instruction-tuned models (use GenericInstruct: each
+    ## model's own HF chat template is applied at inference time). For the 1M /
+    ## 512k context models, pass `--max_model_len` to vLLM to avoid OOM, and
+    ## `--trust_remote_code` for GLM-4 / InternLM which ship custom model code.
+    ## OctoLong (Qwen3 architecture, sizes 0.6B - 14B)
+    LanguageModel(
+        "OctoLong/OctoLong-0.6B-Instruct",
+        "OctoLong-0.6B-Instruct",
+        LMStyle.GenericInstruct,
+        datetime(2025, 1, 1),
+        link="https://huggingface.co/OctoLong/OctoLong-0.6B-Instruct",
+    ),
+    LanguageModel(
+        "OctoLong/OctoLong-1.7B-Instruct",
+        "OctoLong-1.7B-Instruct",
+        LMStyle.GenericInstruct,
+        datetime(2025, 1, 1),
+        link="https://huggingface.co/OctoLong/OctoLong-1.7B-Instruct",
+    ),
+    LanguageModel(
+        "OctoLong/OctoLong-4B-Instruct",
+        "OctoLong-4B-Instruct",
+        LMStyle.GenericInstruct,
+        datetime(2025, 1, 1),
+        link="https://huggingface.co/OctoLong/OctoLong-4B-Instruct",
+    ),
+    LanguageModel(
+        "OctoLong/OctoLong-8B-Instruct",
+        "OctoLong-8B-Instruct",
+        LMStyle.GenericInstruct,
+        datetime(2025, 1, 1),
+        link="https://huggingface.co/OctoLong/OctoLong-8B-Instruct",
+    ),
+    LanguageModel(
+        "OctoLong/OctoLong-14B-Instruct",
+        "OctoLong-14B-Instruct",
+        LMStyle.GenericInstruct,
+        datetime(2025, 1, 1),
+        link="https://huggingface.co/OctoLong/OctoLong-14B-Instruct",
+    ),
+    ## Llama 3.2 Instruct (1B, 3B)
+    LanguageModel(
+        "meta-llama/Llama-3.2-1B-Instruct",
+        "Llama-3.2-1B-Ins",
+        LMStyle.GenericInstruct,
+        datetime(2024, 9, 25),
+        link="https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct",
+    ),
+    LanguageModel(
+        "meta-llama/Llama-3.2-3B-Instruct",
+        "Llama-3.2-3B-Ins",
+        LMStyle.GenericInstruct,
+        datetime(2024, 9, 25),
+        link="https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct",
+    ),
+    ## Yi-Coder Chat (1.5B)
+    LanguageModel(
+        "01-ai/Yi-Coder-1.5B-Chat",
+        "Yi-Coder-1.5B-Chat",
+        LMStyle.GenericInstruct,
+        datetime(2024, 9, 4),
+        link="https://huggingface.co/01-ai/Yi-Coder-1.5B-Chat",
+    ),
+    ## IBM Granite 3.1 Instruct (2B, 8B)
+    LanguageModel(
+        "ibm-granite/granite-3.1-2b-instruct",
+        "Granite-3.1-2B-Ins",
+        LMStyle.GenericInstruct,
+        datetime(2024, 12, 18),
+        link="https://huggingface.co/ibm-granite/granite-3.1-2b-instruct",
+    ),
+    LanguageModel(
+        "ibm-granite/granite-3.1-8b-instruct",
+        "Granite-3.1-8B-Ins",
+        LMStyle.GenericInstruct,
+        datetime(2024, 12, 18),
+        link="https://huggingface.co/ibm-granite/granite-3.1-8b-instruct",
+    ),
+    ## Qwen long-context Instruct (Qwen3-4B-2507, Qwen2.5-1M 7B/14B)
+    LanguageModel(
+        "Qwen/Qwen3-4B-Instruct-2507",
+        "Qwen3-4B-Instruct-2507",
+        LMStyle.GenericInstruct,
+        datetime(2025, 7, 1),
+        link="https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507",
+    ),
+    LanguageModel(
+        "Qwen/Qwen2.5-7B-Instruct-1M",
+        "Qwen2.5-7B-Instruct-1M",
+        LMStyle.GenericInstruct,
+        datetime(2025, 1, 27),
+        link="https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-1M",
+    ),
+    LanguageModel(
+        "Qwen/Qwen2.5-14B-Instruct-1M",
+        "Qwen2.5-14B-Instruct-1M",
+        LMStyle.GenericInstruct,
+        datetime(2025, 1, 27),
+        link="https://huggingface.co/Qwen/Qwen2.5-14B-Instruct-1M",
+    ),
+    ## Arcee AFM-4.5B
+    LanguageModel(
+        "arcee-ai/AFM-4.5B",
+        "AFM-4.5B",
+        LMStyle.GenericInstruct,
+        datetime(2025, 7, 1),
+        link="https://huggingface.co/arcee-ai/AFM-4.5B",
+    ),
+    ## Mistral long-context (Ministral-8B, MegaBeam-Mistral-7B-512k)
+    LanguageModel(
+        "mistralai/Ministral-8B-Instruct-2410",
+        "Ministral-8B-Instruct-2410",
+        LMStyle.GenericInstruct,
+        datetime(2024, 10, 16),
+        link="https://huggingface.co/mistralai/Ministral-8B-Instruct-2410",
+    ),
+    LanguageModel(
+        "aws-prototyping/MegaBeam-Mistral-7B-512k",
+        "MegaBeam-Mistral-7B-512k",
+        LMStyle.GenericInstruct,
+        datetime(2024, 8, 1),
+        link="https://huggingface.co/aws-prototyping/MegaBeam-Mistral-7B-512k",
+    ),
+    ## InternLM 2.5 7B Chat 1M (needs --trust_remote_code)
+    LanguageModel(
+        "internlm/internlm2_5-7b-chat-1m",
+        "InternLM2.5-7B-Chat-1M",
+        LMStyle.GenericInstruct,
+        datetime(2024, 8, 1),
+        link="https://huggingface.co/internlm/internlm2_5-7b-chat-1m",
+    ),
+    ## Long-context Llama-3 variants (8B)
+    LanguageModel(
+        "nvidia/Llama-3.1-Nemotron-8B-UltraLong-1M-Instruct",
+        "Llama-3.1-Nemotron-8B-UltraLong-1M-Instruct",
+        LMStyle.GenericInstruct,
+        datetime(2025, 4, 1),
+        link="https://huggingface.co/nvidia/Llama-3.1-Nemotron-8B-UltraLong-1M-Instruct",
+    ),
+    LanguageModel(
+        "princeton-nlp/Llama-3-8B-ProLong-512k-Instruct",
+        "Llama-3-8B-ProLong-512k-Instruct",
+        LMStyle.GenericInstruct,
+        datetime(2024, 10, 1),
+        link="https://huggingface.co/princeton-nlp/Llama-3-8B-ProLong-512k-Instruct",
+    ),
+    LanguageModel(
+        "gradientai/Llama-3-8B-Instruct-262k",
+        "Llama-3-8B-Instruct-262k",
+        LMStyle.GenericInstruct,
+        datetime(2024, 5, 1),
+        link="https://huggingface.co/gradientai/Llama-3-8B-Instruct-262k",
+    ),
+    ## GLM-4 9B Chat 1M (needs --trust_remote_code)
+    LanguageModel(
+        "zai-org/glm-4-9b-chat-1m",
+        "GLM-4-9B-Chat-1M",
+        LMStyle.GenericInstruct,
+        datetime(2024, 6, 5),
+        link="https://huggingface.co/zai-org/glm-4-9b-chat-1m",
     ),
 ]
 

@@ -3,6 +3,7 @@ import json
 from anthropic import HUMAN_PROMPT, AI_PROMPT
 
 from lcb_runner.lm_styles import LMStyle
+from lcb_runner.prompts.utils import apply_hf_chat_template
 
 
 class PromptConstants:
@@ -173,11 +174,30 @@ def get_qwen_question_template_answer(question: str, code, result, metadata):
     return prompt
 
 def format_prompt_self_repair(
-    question: str, LanguageModelStyle: LMStyle, code, result, metadata
+    question: str,
+    LanguageModelStyle: LMStyle,
+    code,
+    result,
+    metadata,
+    tokenizer_name: str | None = None,
 ) -> str:
     if result:
         # The code is accepted, no need to change anything.
         return ""
+    if LanguageModelStyle == LMStyle.GenericInstruct:
+        assert (
+            tokenizer_name is not None
+        ), "GenericInstruct requires a tokenizer_name (the model repo id or local path)"
+        chat_messages = [
+            {"role": "system", "content": PromptConstants.SYSTEM_MESSAGE_GENERIC},
+            {
+                "role": "user",
+                "content": get_generic_question_template_answer(
+                    question, code, result, metadata
+                ),
+            },
+        ]
+        return apply_hf_chat_template(tokenizer_name, chat_messages)
     if LanguageModelStyle == LMStyle.OpenAIChat:
         chat_messages = [
             {"role": "system", "content": PromptConstants.SYSTEM_MESSAGE_GENERIC},

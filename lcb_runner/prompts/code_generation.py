@@ -8,6 +8,7 @@ except ImportError:
 
 from lcb_runner.lm_styles import LMStyle
 from lcb_runner.benchmarks.code_generation import CodeGenerationProblem
+from lcb_runner.prompts.utils import apply_hf_chat_template
 
 
 class PromptConstants:
@@ -207,7 +208,9 @@ def get_base_model_question_template_answer(question: CodeGenerationProblem):
 
 
 def format_prompt_generation(
-    question: CodeGenerationProblem, LanguageModelStyle: LMStyle
+    question: CodeGenerationProblem,
+    LanguageModelStyle: LMStyle,
+    tokenizer_name: str | None = None,
 ) -> str:
     if LanguageModelStyle in [
         LMStyle.OpenAIChat,
@@ -248,6 +251,22 @@ def format_prompt_generation(
             },
         ]
         return chat_messages
+
+    if LanguageModelStyle == LMStyle.GenericInstruct:
+        assert (
+            tokenizer_name is not None
+        ), "GenericInstruct requires a tokenizer_name (the model repo id or local path)"
+        chat_messages = [
+            {
+                "role": "system",
+                "content": PromptConstants.SYSTEM_MESSAGE_GENERIC,
+            },
+            {
+                "role": "user",
+                "content": get_generic_question_template_answer(question),
+            },
+        ]
+        return apply_hf_chat_template(tokenizer_name, chat_messages)
 
     if LanguageModelStyle == LMStyle.LLaMa3:
         chat_messages = [

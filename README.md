@@ -73,6 +73,26 @@ The scenario (here `codegeneration`) can be used to specify the scenario for the
 python -m lcb_runner.runner.main --model {model_name} --scenario codegeneration
 ```
 
+#### Local instruction-tuned models (long-context and others)
+
+Many instruction-tuned models are registered with the `GenericInstruct` style, which renders each prompt using the model's **own Hugging Face chat template** (downloaded along with the model). This makes it easy to add new local models that ship a `chat_template` without writing a per-family template by hand. The following models are supported out of the box (see [./lcb_runner/lm_styles.py](./lcb_runner/lm_styles.py) for the full list):
+
+`OctoLong/OctoLong-{0.6B,1.7B,4B,8B,14B}-Instruct`, `meta-llama/Llama-3.2-{1B,3B}-Instruct`, `meta-llama/Llama-3.1-8B-Instruct`, `01-ai/Yi-Coder-{1.5B,9B}-Chat`, `ibm-granite/granite-3.1-{2b,8b}-instruct`, `Qwen/Qwen3-4B-Instruct-2507`, `Qwen/Qwen2.5-{7B,14B}-Instruct-1M`, `arcee-ai/AFM-4.5B`, `aws-prototyping/MegaBeam-Mistral-7B-512k`, `internlm/internlm2_5-7b-chat-1m`, `nvidia/Llama-3.1-Nemotron-8B-UltraLong-1M-Instruct`, `princeton-nlp/Llama-3-8B-ProLong-512k-Instruct`, `gradientai/Llama-3-8B-Instruct-262k`, `mistralai/Ministral-8B-Instruct-2410`, `zai-org/glm-4-9b-chat-1m`.
+
+Several of these are long-context models (e.g. the `*-1M` and `*-512k` variants report context windows of 512k–1M tokens). vLLM will by default try to allocate a KV cache for the **full** context window, which will run out of memory. Use `--max_model_len` to cap the served context length (and optionally `--gpu_memory_utilization`):
+
+```bash
+python -m lcb_runner.runner.main --model Qwen/Qwen2.5-7B-Instruct-1M --scenario codegeneration --evaluate --max_model_len 32768
+```
+
+`zai-org/glm-4-9b-chat-1m` and `internlm/internlm2_5-7b-chat-1m` ship custom model code, so pass `--trust_remote_code` for vLLM to load them:
+
+```bash
+python -m lcb_runner.runner.main --model zai-org/glm-4-9b-chat-1m --scenario codegeneration --evaluate --trust_remote_code --max_model_len 32768
+```
+
+Note that some `meta-llama/*` and all `OctoLong/*` repositories are gated on Hugging Face; make sure you have accepted their license and that your `HF_TOKEN` is set (or pass a `--local_model_path`).
+
 Additionally, `--use_cache` flag can be used to cache the generated outputs and `--continue_existing` flag can be used to use the existing dumped results. In case you wish to use model from a local path, you can additionally provide `--local_model_path` flag with the path to the model. We use `n=10` and `temperature=0.2` for generation. Please check the [./lcb_runner/runner/parser.py](./lcb_runner/runner/parser.py) file for more details on the flags.
 
 For closed API models,  `--multiprocess` flag can be used to parallelize queries to API servers (adjustable according to rate limits).
@@ -157,6 +177,21 @@ Particularly, arrange the outputs in the following format
 ## Adding Support for New Models
 
 To add support for new models, we have implemented an extensible framework to add new models and customize prompts appropriately. 
+
+**Quick path (recommended for most instruction-tuned local models):** If the model ships a Hugging Face `chat_template` (most modern instruction-tuned models do), simply add it to the `LanguageModelList` array in [./lcb_runner/lm_styles.py](./lcb_runner/lm_styles.py) with `LMStyle.GenericInstruct`. No prompt code needs to change — the runner applies the model's own chat template at inference time (see [./lcb_runner/prompts/utils.py](./lcb_runner/prompts/utils.py)).
+
+```python
+# ./lcb_runner/lm_styles.py
+LanguageModel(
+    "my-org/My-Instruct-Model",
+    "My-Instruct-Model",
+    LMStyle.GenericInstruct,
+    datetime(2025, 1, 1),
+    link="https://huggingface.co/my-org/My-Instruct-Model",
+),
+```
+
+**Custom path (for a bespoke prompt format):** 
 
 Step 1: Add a new model to the [./lcb_runner/lm_styles.py](./lcb_runner/lm_styles.py) file. Particularly, extend the `LMStyle` class to add a new model family and extend the model to the `LanguageModelList` array.
 

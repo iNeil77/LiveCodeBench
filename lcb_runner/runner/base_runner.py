@@ -15,6 +15,11 @@ class BaseRunner(ABC):
         self.args = args
         self.model = model
         self.client_kwargs: dict[str | str] = {}
+        # Used by GenericInstruct prompts to apply the model's own HF chat
+        # template. Prefer an explicit local path when one is provided.
+        self.tokenizer_name = (
+            getattr(args, "local_model_path", None) or model.model_name
+        )
 
         if self.args.use_cache:
             self.cache_path = get_cache_path(model.model_repr, args)
@@ -152,6 +157,7 @@ class BaseRunner(ABC):
                             code_list[code_idx],
                             graded_list[code_idx],
                             metadata[code_idx],
+                            tokenizer_name=self.tokenizer_name,
                         )
                         if prompt == "":
                             outputs[problem_idx][code_idx] = output_list[code_idx]
@@ -175,7 +181,10 @@ class BaseRunner(ABC):
             return self.run_main_repair(benchmark, format_prompt)
 
         prompts = [
-            format_prompt(problem, self.model.model_style) for problem in benchmark
+            format_prompt(
+                problem, self.model.model_style, tokenizer_name=self.tokenizer_name
+            )
+            for problem in benchmark
         ]
         outputs = self.prompts_to_outputs(prompts)
         return outputs

@@ -2,6 +2,7 @@ import json
 
 from lcb_runner.lm_styles import LMStyle
 from lcb_runner.benchmarks import CodeExecutionProblem
+from lcb_runner.prompts.utils import apply_hf_chat_template
 
 
 def make_cot_output_prompt(s):
@@ -65,16 +66,23 @@ assert {input} == ??
 """
 
 
-def format_prompt_execution(question, LanguageModelStyle):
-    return format_prompt_execution_base(question, LanguageModelStyle, False)
+def format_prompt_execution(question, LanguageModelStyle, tokenizer_name=None):
+    return format_prompt_execution_base(
+        question, LanguageModelStyle, False, tokenizer_name
+    )
 
 
-def format_prompt_execution_cot(question, LanguageModelStyle):
-    return format_prompt_execution_base(question, LanguageModelStyle, True)
+def format_prompt_execution_cot(question, LanguageModelStyle, tokenizer_name=None):
+    return format_prompt_execution_base(
+        question, LanguageModelStyle, True, tokenizer_name
+    )
 
 
 def format_prompt_execution_base(
-    question: CodeExecutionProblem, LanguageModelStyle: LMStyle, cot: bool
+    question: CodeExecutionProblem,
+    LanguageModelStyle: LMStyle,
+    cot: bool,
+    tokenizer_name: str | None = None,
 ) -> str:
     code = question.code
     input = question.input
@@ -95,6 +103,18 @@ def format_prompt_execution_base(
             {"role": "user", "content": prompt},
         ]
         return chat_messages
+    if LanguageModelStyle == LMStyle.GenericInstruct:
+        assert (
+            tokenizer_name is not None
+        ), "GenericInstruct requires a tokenizer_name (the model repo id or local path)"
+        chat_messages = [
+            {
+                "role": "system",
+                "content": system_message,
+            },
+            {"role": "user", "content": prompt},
+        ]
+        return apply_hf_chat_template(tokenizer_name, chat_messages)
     if LanguageModelStyle == LMStyle.LLaMa3:
         chat_messages = [
             {
