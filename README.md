@@ -20,24 +20,47 @@ git clone https://github.com/LiveCodeBench/LiveCodeBench.git
 cd LiveCodeBench
 ```
 
-We recommend using [uv](https://github.com/astral-sh/uv)
-for managing dependencies, which can be installed a [number of ways](https://github.com/astral-sh/uv?tab=readme-ov-file#installation).
+We use [uv](https://github.com/astral-sh/uv) to manage dependencies. **You do not
+need conda or a preexisting Python** — `uv` provisions everything itself, and the
+GPU stack (PyTorch / vLLM) is installed from CUDA-enabled PyPI wheels, so **no
+system CUDA toolkit is required either** (only an NVIDIA driver for GPU runs).
 
-Verify that `uv` is installed on your system by running:
+First install `uv` ([several ways](https://github.com/astral-sh/uv?tab=readme-ov-file#installation)); the standalone installer needs nothing preinstalled:
 
 ```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh   # then restart your shell, or: source $HOME/.local/bin/env
 uv --version
 ```
 
-Once `uv` has been installed, use it to create a virtual environment for
-LiveCodeBench and install its dependencies with the following commands:
+Then, from the repository root, create the environment and install the **exact
+locked dependencies** with a single command:
 
 ```bash
-uv venv --python 3.11
-source .venv/bin/activate
-
-uv pip install -e .
+uv sync --frozen
 ```
+
+`uv sync` reads [`.python-version`](./.python-version) and auto-downloads a managed
+CPython 3.12 if it isn't already available, creates a project-local `.venv/`, and
+installs the pinned packages from [`uv.lock`](./uv.lock) (`--frozen` guarantees the
+lockfile is used as-is). No conda environment is involved at any point.
+
+> **Run commands with `uv run`** (e.g. `uv run python -m lcb_runner.runner.main ...`).
+> This executes inside the project `.venv` without needing to activate it, and the
+> commands throughout this README work verbatim when prefixed with `uv run`. If you
+> prefer an activated shell, `source .venv/bin/activate` also works.
+>
+> Always invoke the tool **from the repository root** — it loads bundled prompt data
+> via relative paths (`lcb_runner/prompts/few_shot_examples/...`), so running from
+> elsewhere will fail to find those files.
+
+<details>
+<summary>Updating or regenerating the lockfile</summary>
+
+`uv sync --frozen` will error if `pyproject.toml` and `uv.lock` have drifted. To
+re-resolve and refresh the lock after editing dependencies, run `uv lock` (or
+`uv sync` without `--frozen`). To verify the lock is in sync without changing
+anything, use `uv lock --check`.
+</details>
 
 ## Data
 We provide a benchmark for different code capability scenarios
@@ -49,17 +72,17 @@ We provide a benchmark for different code capability scenarios
 
 ### TL;DR — local run with vLLM
 
-Generate with a local model and grade the results against the test cases in one command:
+Generate with a local model and grade the results against the test cases in one command (prefix with `uv run` so it runs inside the project environment — see [Installation](#installation)):
 
 ```bash
-python -m lcb_runner.runner.main \
+uv run python -m lcb_runner.runner.main \
     --model Qwen/Qwen2.5-7B-Instruct-1M \
     --scenario codegeneration \
     --max_model_len 32768 \
     --evaluate
 ```
 
-Then read the overall `pass@1` from `output/Qwen2.5-7B-Instruct-1M/codegeneration_10_0.2_eval.json`. The rest of this section explains each stage, every relevant flag, and the other scenarios. See [How a run works](#how-a-run-works-overview) for the high-level flow and [Local test-case evaluation](#local-test-case-evaluation) for an important security note about executing model-generated code.
+Then read the overall `pass@1` from `output/Qwen2.5-7B-Instruct-1M/codegeneration_10_0.2_eval.json`. The rest of this section explains each stage, every relevant flag, and the other scenarios. (For brevity the remaining examples omit the `uv run` prefix; add it, or activate the venv with `source .venv/bin/activate`.) See [How a run works](#how-a-run-works-overview) for the high-level flow and [Local test-case evaluation](#local-test-case-evaluation) for an important security note about executing model-generated code.
 
 ### Dataset Versions
 Since LiveCodeBench is a continuously updated benchmark, we provide different versions of the dataset. Particularly, we provide the following versions of the dataset:
