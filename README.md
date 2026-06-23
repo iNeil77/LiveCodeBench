@@ -190,7 +190,7 @@ CUDA_VISIBLE_DEVICES=0,1 python -m lcb_runner.runner.main \
 
 #### Models that need extra flags
 
-`zai-org/glm-4-9b-chat-1m` and `internlm/internlm2_5-7b-chat-1m` ship custom model code, so pass **`--trust_remote_code`** for vLLM to load them:
+`zai-org/glm-4-9b-chat-1m`, `internlm/internlm2_5-7b-chat-1m`, and `infly/OpenCoder-8B-Instruct` ship custom model/tokenizer code, so pass **`--trust_remote_code`** for vLLM to load them:
 
 ```bash
 python -m lcb_runner.runner.main \
@@ -217,7 +217,7 @@ Some `meta-llama/*` and all `OctoLong/*` repositories are **gated** on Hugging F
 
 Many instruction-tuned models are registered with the `GenericInstruct` style, which renders each prompt using the model's **own Hugging Face chat template** (shipped with the tokenizer). This is what makes it trivial to add new local models without hand-writing a per-family prompt — see [Adding Support for New Models](#adding-support-for-new-models). The following are registered and verified:
 
-`OctoLong/OctoLong-{0.6B,1.7B,4B,8B,14B}-Instruct`, `meta-llama/Llama-3.2-{1B,3B}-Instruct`, `meta-llama/Llama-3.1-8B-Instruct`, `01-ai/Yi-Coder-{1.5B,9B}-Chat`, `ibm-granite/granite-3.1-{2b,8b}-instruct`, `Qwen/Qwen3-4B-Instruct-2507`, `Qwen/Qwen2.5-{7B,14B}-Instruct-1M`, `arcee-ai/AFM-4.5B`, `aws-prototyping/MegaBeam-Mistral-7B-512k`, `internlm/internlm2_5-7b-chat-1m`, `nvidia/Llama-3.1-Nemotron-8B-UltraLong-1M-Instruct`, `princeton-nlp/Llama-3-8B-ProLong-512k-Instruct`, `gradientai/Llama-3-8B-Instruct-262k`, `mistralai/Ministral-8B-Instruct-2410`, `zai-org/glm-4-9b-chat-1m`.
+`OctoLong/OctoLong-{0.6B,1.7B,4B,8B,14B}-Instruct`, `meta-llama/Llama-3.2-{1B,3B}-Instruct`, `meta-llama/Llama-3.1-8B-Instruct`, `01-ai/Yi-Coder-{1.5B,9B}-Chat`, `ibm-granite/granite-3.1-{2b,8b}-instruct`, `Qwen/Qwen3-4B-Instruct-2507`, `Qwen/Qwen2.5-{7B,14B}-Instruct-1M`, `arcee-ai/AFM-4.5B`, `aws-prototyping/MegaBeam-Mistral-7B-512k`, `internlm/internlm2_5-7b-chat-1m`, `nvidia/Llama-3.1-Nemotron-8B-UltraLong-1M-Instruct`, `princeton-nlp/Llama-3-8B-ProLong-512k-Instruct`, `gradientai/Llama-3-8B-Instruct-262k`, `mistralai/Ministral-8B-Instruct-2410`, `zai-org/glm-4-9b-chat-1m`, `allenai/Olmo-3-7B-Instruct`, `ByteDance-Seed/Seed-Coder-8B-Instruct`, `infly/OpenCoder-8B-Instruct` (needs `--trust_remote_code`), `deepseek-ai/deepseek-coder-7b-instruct-v1.5`.
 
 > For closed API models, no GPU is needed; instead set the provider's API key (e.g. `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`) and use `--multiprocess N` to parallelize requests within your rate limits. The vLLM-only flags above are ignored for API models.
 

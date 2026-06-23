@@ -1026,6 +1026,43 @@ LanguageModelList: list[LanguageModel] = [
         datetime(2024, 6, 5),
         link="https://huggingface.co/zai-org/glm-4-9b-chat-1m",
     ),
+    ## Code-focused instruction-tuned models (GenericInstruct: each model's own
+    ## HF chat template is applied, so prompts match the chat template exactly).
+    ## All four ship a chat template that injects its own default system prompt
+    ## only when no system message is supplied; we always pass SYSTEM_MESSAGE_GENERIC,
+    ## which the template renders verbatim. Verified byte-for-byte against each
+    ## tokenizer's apply_chat_template.
+    LanguageModel(
+        "allenai/Olmo-3-7B-Instruct",
+        "Olmo-3-7B-Instruct",
+        LMStyle.GenericInstruct,
+        datetime(2025, 11, 20),
+        link="https://huggingface.co/allenai/Olmo-3-7B-Instruct",
+    ),
+    LanguageModel(
+        "ByteDance-Seed/Seed-Coder-8B-Instruct",
+        "Seed-Coder-8B-Instruct",
+        LMStyle.GenericInstruct,
+        datetime(2025, 5, 1),
+        link="https://huggingface.co/ByteDance-Seed/Seed-Coder-8B-Instruct",
+    ),
+    ## OpenCoder ships a custom tokenizer class, so it needs --trust_remote_code.
+    LanguageModel(
+        "infly/OpenCoder-8B-Instruct",
+        "OpenCoder-8B-Instruct",
+        LMStyle.GenericInstruct,
+        datetime(2024, 11, 9),
+        link="https://huggingface.co/infly/OpenCoder-8B-Instruct",
+    ),
+    ## deepseek-coder-7b-instruct-v1.5 uses its own bos + ### Instruction/### Response
+    ## template (distinct from the legacy LMStyle.DeepSeekCodeInstruct hand-written path).
+    LanguageModel(
+        "deepseek-ai/deepseek-coder-7b-instruct-v1.5",
+        "DSCoder-7b-Ins-v1.5",
+        LMStyle.GenericInstruct,
+        datetime(2024, 1, 25),
+        link="https://huggingface.co/deepseek-ai/deepseek-coder-7b-instruct-v1.5",
+    ),
 ]
 
 LanguageModelStore: dict[str, LanguageModel] = {
